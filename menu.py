@@ -22,8 +22,11 @@ def get_mode():
     return mode
 
 
-def selection_loop(choose_function, valid_values, converter):
+def selection_loop(logo, choose_function, valid_values, converter):
     while True:
+        utils.clear_console()
+        print(logo)
+        print('\n')
         game_option = choose_function()
         if not game_option.isdigit():
             print('Некорректный ввод. Введите Enter')
@@ -42,11 +45,11 @@ def start(logo):
         utils.clear_console()
         print(logo)
         print('\n')
-        variant = selection_loop(get_variant, range(1, 5), base.numbers_to_variants)
+        variant = selection_loop(logo, get_variant, range(1, 5), base.numbers_to_variants)
         utils.clear_console()
         print(logo)
         print('\n')
-        mode = selection_loop(get_mode, range(1, 4), base.numbers_to_modes)
+        mode = selection_loop(logo, get_mode, range(1, 4), base.numbers_to_modes)
         if mode != 'back':
             break
     return variant, mode
