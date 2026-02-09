@@ -5,7 +5,6 @@ import random
 import re
 import time
 
-import old_netcode
 
 
 class Piece:
