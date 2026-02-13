@@ -10,7 +10,7 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♙' if color == 'white' else '♟'
+        self.symbol = '♙'
         self.direction = -1 if color == 'white' else 1  # Белые идут вверх (x уменьшается)
 
     def get_moves(self, board, x, y):
@@ -42,7 +42,7 @@ class Pawn(Piece):
 class Knight(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♘' if color == 'white' else '♞'
+        self.symbol = '♞'
 
     def get_moves(self, board, x, y):
         moves = []
@@ -61,7 +61,7 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♗' if color == 'white' else '♝'
+        self.symbol = '♝'
 
     def get_moves(self, board, x, y):
         moves = []
@@ -88,7 +88,7 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♖' if color == 'white' else '♜'
+        self.symbol = '♜'
 
     def get_moves(self, board, x, y):
         moves = []
@@ -115,7 +115,7 @@ class Rook(Piece):
 class Queen(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♕' if color == 'white' else '♛'
+        self.symbol = '♛'
 
     def get_moves(self, board, x, y):
         moves = []
@@ -142,7 +142,7 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = '♔' if color == 'white' else '♚'
+        self.symbol = '♚'
 
     def get_moves(self, board, x, y):
         moves = []

@@ -6,37 +6,6 @@ import re
 import time
 
 
-
-
-
-def setup_board():
-    board = [[None for _ in range(8)] for _ in range(8)]
-
-    for i in range(8):
-        board[6][i] = Pawn('white')
-        board[1][i] = Pawn('black')
-
-    board[7][0] = Rook('white')
-    board[7][1] = Knight('white')
-    board[7][2] = Bishop('white')
-    board[7][3] = Queen('white')
-    board[7][4] = King('white')
-    board[7][5] = Bishop('white')
-    board[7][6] = Knight('white')
-    board[7][7] = Rook('white')
-
-    board[0][0] = Rook('black')
-    board[0][1] = Knight('black')
-    board[0][2] = Bishop('black')
-    board[0][3] = Queen('black')
-    board[0][4] = King('black')
-    board[0][5] = Bishop('black')
-    board[0][6] = Knight('black')
-    board[0][7] = Rook('black')
-
-    return board
-
-
 def print_board(board, player):
     print(f"\nХод: {'белых' if player == 'white' else 'черных'}")
 
@@ -90,77 +59,6 @@ def find_king(board, color):
             if isinstance(piece, King) and piece.color == color:
                 return i, j
     return None
-
-
-def is_in_check(board, color):
-    king_pos = find_king(board, color)
-    if not king_pos:
-        return False
-
-    opponent = 'black' if color == 'white' else 'white'
-
-    for i in range(8):
-        for j in range(8):
-            piece = board[i][j]
-            if piece and piece.color == opponent:
-                if king_pos in piece.get_moves(board, i, j):
-                    return True
-    return False
-
-
-def is_checkmate(board, color):
-    if not is_in_check(board, color):
-        return False
-
-    for i in range(8):
-        for j in range(8):
-            piece = board[i][j]
-            if piece and piece.color == color:
-                for move in piece.get_moves(board, i, j):
-                    temp = copy.deepcopy(board)
-                    temp[move[0]][move[1]] = piece
-                    temp[i][j] = None
-
-                    if not is_in_check(temp, color):
-                        return False
-    return True
-
-
-def is_stalemate(board, color):
-    if is_in_check(board, color):
-        return False
-
-    for i in range(8):
-        for j in range(8):
-            piece = board[i][j]
-            if piece and piece.color == color:
-                for move in piece.get_moves(board, i, j):
-                    temp = copy.deepcopy(board)
-                    temp[move[0]][move[1]] = piece
-                    temp[i][j] = None
-
-                    if not is_in_check(temp, color):
-                        return False
-    return True
-
-
-def get_valid_moves(board, from_pos, player):
-    x, y = from_pos
-    piece = board[x][y]
-
-    if not piece or piece.color != player:
-        return []
-
-    moves = []
-    for move in piece.get_moves(board, x, y):
-        temp = copy.deepcopy(board)
-        temp[move[0]][move[1]] = piece
-        temp[x][y] = None
-
-        if not is_in_check(temp, player):
-            moves.append(move)
-
-    return moves
 
 
 def local_game():

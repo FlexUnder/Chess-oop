@@ -45,11 +45,11 @@ def start(logo):
         utils.clear_console()
         print(logo)
         print('\n')
-        variant = selection_loop(logo, get_variant, range(1, 5), base.numbers_to_variants)
+        variant = selection_loop(logo, get_variant, range(1, 5), base.numbers_to_str_variants)
         utils.clear_console()
         print(logo)
         print('\n')
-        mode = selection_loop(logo, get_mode, range(1, 4), base.numbers_to_modes)
+        mode = selection_loop(logo, get_mode, range(1, 4), base.numbers_to_str_modes)
         if mode != 'back':
             break
     return variant, mode
