@@ -2,6 +2,9 @@ from modes import base
 
 
 class Mode(base.GameMode):
+    def __init__(self, board, rules):
+        super().__init__(board, rules)
+
     def run(self):
         while True:
 

@@ -52,13 +52,7 @@ def coords_to_pos(x, y):
     return col + row
 
 
-def find_king(board, color):
-    for i in range(8):
-        for j in range(8):
-            piece = board[i][j]
-            if isinstance(piece, King) and piece.color == color:
-                return i, j
-    return None
+
 
 
 def local_game():
