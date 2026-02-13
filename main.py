@@ -1,5 +1,4 @@
-import menu
-
+from ui import menu
 from game import Game
 
 
