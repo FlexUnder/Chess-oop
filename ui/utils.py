@@ -8,3 +8,8 @@ def clear_console():
         os.system('cls')
     else:
         os.system('clear')
+
+
+def print_logo():
+    print(''.join(open('assets/logo.txt').readlines()))
+    print('\n')

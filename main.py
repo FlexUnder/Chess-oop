@@ -3,8 +3,7 @@ from game import Game
 
 
 def main():
-    logo = ''.join(open('assets/logo.txt').readlines())
-    variant_module_name, mode_module_name = menu.start(logo)
+    variant_module_name, mode_module_name = menu.start()
     game = Game(variant_module_name, mode_module_name)
     game.run()
 
