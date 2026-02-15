@@ -6,9 +6,17 @@ class Render:
 
     def print_board(self, board: Board):
         reset_all_colors = '\x1b[0m'
+        indent = '\t' * 6
+
+        letters = '  a b c d e f g h'
+
+        print(indent + letters)
 
         for y in range(board.width):
-            print('\t' * 6, end='')  # ← 4 таба перед строкой
+            print(indent, end='')
+
+            row_number = y + 1
+            print(f"{row_number} ", end='')
 
             for x in range(board.length):
                 back_ground_color = WHITE_SQUARE if (x + y) % 2 == 0 else BLACK_SQUARE
@@ -21,4 +29,6 @@ class Render:
                     print(f'{back_ground_color}  {reset_all_colors}', end='')
 
             print()
+
         print()
+

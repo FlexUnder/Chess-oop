@@ -1,11 +1,14 @@
 import re
 
+from base import WHITE
+
 
 class GameMode:
     def __init__(self, board, rules, render):
         self.board = board
         self.rules = rules
         self.render = render
+        self.current_player = WHITE
 
     def run(self):
         raise NotImplementedError
@@ -21,3 +24,12 @@ class GameMode:
         if match:
             return match.groups()
         return None
+
+    def parse_input(self, normalized_input):
+        letters_to_coordinates = {
+            'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7
+        }
+        position_from, position_to = normalized_input
+        x_from, y_from = letters_to_coordinates[position_from[0]], int(position_from[1]) - 1
+        x_to, y_to = letters_to_coordinates[position_to[0]], int(position_to[1]) - 1
+        return x_from, y_from, x_to, y_to

@@ -26,7 +26,7 @@ class Board:
 
     def apply_move(self, fx, fy, tx, ty) -> Move:
         move = Move(fx, fy, tx, ty)
-        self.field[fy][fx], self.field[ty][tx] = self.field[ty][tx], self.field[fy][fx]
+        self.field[fy][fx], self.field[ty][tx] = None, self.field[fy][fx]
         return move
 
     def is_position_in_bounds(self, x, y) -> bool:
@@ -39,3 +39,13 @@ class Board:
                 if isinstance(piece, pieces.King) and piece.color == color:
                     return x, y
         return None
+
+    def is_empty(self, x, y) -> bool:
+        if not self.is_position_in_bounds(x, y):
+            return False
+        return True if self.field[y][x] is None else False
+
+    def is_enemy(self, x, y, player_color) -> bool:
+        if not self.is_position_in_bounds(x, y):
+            return False
+        return True if self.field[y][x] is not None and self.field[y][x].color == player_color else False
