@@ -52,15 +52,21 @@ class Rules:
                             return False
         return True
 
-    def get_valid_moves(self, board, from_pos, player):
-        x, y = from_pos
-        piece = board[x][y]
+    def get_valid_moves(self, board, position, player_color):
+        x, y = position
+        piece = board.get_piece(x, y)
 
-        if not piece or piece.color != player:
+        if not piece or piece.color != player_color:
             return []
 
         moves = []
-        for move in piece.get_moves(board, x, y):
+        for dx, dy in dirs:
+        for i in range(1, 8):
+            x_new, y_new = x + dx * i, y + dy * i
+            piece = board.get_piece(x_new, y_new)
+            if not piece and piece.color != self.color:
+                moves.append((x_new, y_new))
+        for direction in piece.directions:
             temp = copy.deepcopy(board)
             temp[move[0]][move[1]] = piece
             temp[x][y] = None

@@ -21,6 +21,7 @@ class Mode(base.GameMode):
                 print('\n' * 3 + '\t' * 4 + 'Неверный формат! Примеры: e2 e4, e2e4, а2 а4')
                 input('\n' + '\t' * 4 + 'Нажмите Enter чтобы продолжить...')
                 continue
+
             move = self.get_move()
 
             if not self.rules.is_valid_move(self.board, move):
