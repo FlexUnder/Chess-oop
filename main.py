@@ -3,8 +3,8 @@ from game import Game
 
 
 def main():
-    variant_module_name, mode_module_name = menu.start()
-    game = Game(variant_module_name, mode_module_name)
+    variant_module_name, mode_module_name, network_config = menu.start()
+    game = Game(variant_module_name, mode_module_name, network_config)
     game.run()
 
 

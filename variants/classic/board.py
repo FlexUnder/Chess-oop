@@ -48,4 +48,4 @@ class Board:
     def is_enemy(self, x, y, player_color) -> bool:
         if not self.is_position_in_bounds(x, y):
             return False
-        return True if self.field[y][x] is not None and self.field[y][x].color == player_color else False
+        return True if self.field[y][x] and self.field[y][x].color != player_color else False

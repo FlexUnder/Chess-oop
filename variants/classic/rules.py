@@ -65,22 +65,19 @@ class Rules:
         moves = []
         direction = piece.direction
 
-        # 1. Обычный ход вперёд
-        if board.is_empty(x + direction, y):
-            moves.append((x + direction, y))
+        if board.is_empty(x, y + direction):
+            moves.append((x, y + direction))
 
-            # 2. Двойной ход
             if self.is_pawn_starting_rank(y):
-                if board.is_empty(x + 2 * direction, y):
-                    moves.append((x + 2 * direction, y))
+                if board.is_empty(x, y + 2 * direction):
+                    moves.append((x, y + 2 * direction))
 
-        # 3. Взятия
         for dc in [-1, 1]:
-            new_row = x + direction
-            new_col = y + dc
+            x_new = x + dc
+            y_new = y + direction
 
-            if board.is_enemy(new_row, new_col, piece.color):
-                moves.append((new_row, new_col))
+            if board.is_enemy(x_new, y_new, piece.color):
+                moves.append((x_new, y_new))
 
         # 4. En passant
         # if self.can_en_passant(...):

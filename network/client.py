@@ -12,11 +12,11 @@ def connect_to_server(server_ip):
         print('\nСервер найден! Подключен к:', server_ip)
     except socket.gaierror:
         print('Некорректный ip адрес')
-        return None, False
+        return None
     except TimeoutError:
         print('Cервер не найден. Убедитесь в правильности написания адреса. Если подключаетесь по Hamachi, то убедитесь в том что Hamachi включен')
-        return None, False
+        return None
     except ConnectionRefusedError:
         print('Компьютер найден, но соединение было отвергнуто. Проверьте запущен ли сервер, проверьте настройки firewall')
-        return None, False
-    return connection, True
+        return None
+    return connection

@@ -11,5 +11,5 @@ def clear_console():
 
 
 def print_logo():
-    print(''.join(open('assets/logo.txt').readlines()))
+    print(''.join(open('assets/logo_mini.txt').readlines()))
     print('\n')

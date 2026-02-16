@@ -1,25 +1,76 @@
+import random
+
+from network import server, client, protocol
+from base import WHITE, BLACK
+from base import SERVER, CLIENT
+from ui import utils as ui_utils
+from ui import console
 from modes import base
 
 
 class Mode(base.GameMode):
-
-    def __init__(self, board, rules):
-        super().__init__(board, rules)
-        self.connection = self.init_connection()
+    def __init__(self, board, rules, render, network_config):
+        super().__init__(board, rules, render)
+        self.network_type = network_config[0]
+        self.turn = WHITE
+        self.local_player_color = 'Not defined'
+        if self.network_type == SERVER:
+            self.connection = server.start_server()
+        else:
+            self.connection = client.connect_to_server(network_config[1])
 
     def run(self):
+        if self.network_type == SERVER:
+            self.local_player_color = random.choice([WHITE, BLACK])
+            protocol.send_data(self.connection, self.local_player_color)
+        else:
+            opponent_color = protocol.listen_data(self.connection)
+            self.local_player_color = BLACK if opponent_color == WHITE else WHITE
+
         while True:
-            if self.my_turn():
-                move = self.get_input()
-                self.send_move(move)
+            ui_utils.clear_console()
+            ui_utils.print_logo()
+            self.render.print_board(self.board)
+
+            if self.turn == self.local_player_color:
+                raw_input = console.get_player_input(self.turn)
+                normalized = self.normalize_input(raw_input)
+                if not normalized:
+                    self.handle_input_error('Неверный формат! Примеры: e2 e4, e2e4, а2 а4')
+                    continue
+                x_from, y_from, x_to, y_to = self.parse_input(normalized)
+                legal_moves = self.rules.get_legal_moves(self.board, x_from, y_from, self.turn)
+                if (x_to, y_to) not in legal_moves:
+                    self.handle_input_error('Невозможный ход!')
+                    continue
+
+                self.board.apply_move(x_from, y_from, x_to, y_to)
+
+                print(f'{x_from} {y_from} {x_to} {y_to}')
+                protocol.send_data(self.connection, f'{x_from} {y_from} {x_to} {y_to}')
             else:
-                move = self.receive_move()
+                console.print_center('Ход оппонента')
+                opponent_move = map(int, protocol.listen_data(self.connection).split())
+                print(opponent_move)
+                x_from, y_from, x_to, y_to = opponent_move
+                self.board.apply_move(x_from, y_from, x_to, y_to)
+            self.switch_turn()
 
-            self.board.apply_move(move)
-
-            # Проверка конца игры
-            if self.rules.is_checkmate(self.board, self.current_player):
-                print("Game over")
+            if self.rules.is_checkmate(self.board, self.turn):
+                print("Шах и мат!")
                 break
 
-            self.switch_player()
+                # if self.rules.is_stalemate(self.board, self.current_player):
+                #     print("Пат!")
+                #     break
+    def init_connection(self):
+        return
+
+    def handle_input_error(self, message):
+        print('\n' * 3 + '\t' * 4 + message)
+        input('\n' + '\t' * 4 + 'Нажмите Enter чтобы продолжить...')
+
+    def switch_turn(self):
+        self.turn = BLACK if self.turn == WHITE else WHITE
+
+

@@ -6,17 +6,17 @@ class Render:
 
     def print_board(self, board: Board):
         reset_all_colors = '\x1b[0m'
-        indent = '\t' * 6
+        indent = '\t' * 4 + '   '
 
         letters = '  a b c d e f g h'
 
-        print(indent + letters)
+        print(indent + '\033[38;5;102m' + letters)
 
         for y in range(board.width):
             print(indent, end='')
 
-            row_number = y + 1
-            print(f"{row_number} ", end='')
+            row_number = board.width - y
+            print(f'\033[38;5;102m{row_number} ' + reset_all_colors, end='')
 
             for x in range(board.length):
                 back_ground_color = WHITE_SQUARE if (x + y) % 2 == 0 else BLACK_SQUARE
