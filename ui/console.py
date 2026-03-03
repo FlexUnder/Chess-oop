@@ -10,4 +10,4 @@ def get_player_input(color):
 
 
 def print_center(text, offset=0, padding_left=4):
-    print('\t' * (padding_left + offset) + text)
+    print('\t' * (padding_left + offset) + ('\n' + '\t' * (padding_left + offset)).join(text.split('\n')))

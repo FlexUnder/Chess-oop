@@ -2,7 +2,7 @@
 cd /d %~dp0
 
 if not exist venv (
-    echo Виртуальное окружение не найдено. Создание...
+    echo Can not find virtual environment. Creating...
     python -m venv venv
     call venv\Scripts\activate
     pip install -r requirements.txt

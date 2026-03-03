@@ -15,12 +15,16 @@ class Mode(base.GameMode):
         self.turn = WHITE
         self.local_player_color = 'Not defined'
         if self.network_type == SERVER:
-            self.connection = server.start_server()
+            self.socket, self.default_ip, self.hamachi_ip, self.radmin_ip = server.start()
         else:
             self.connection = client.connect_to_server(network_config[1])
 
     def run(self):
         if self.network_type == SERVER:
+            console.print_center(f'iP: {self.default_ip}')
+            console.print_center(f'Hamachi:{self.hamachi_ip}' if self.hamachi_ip else '')
+            console.print_center(f'Radmin:{self.radmin_ip}' if self.radmin_ip else '')
+            self.connection = server.accept_connections(self.socket)
             self.local_player_color = random.choice([WHITE, BLACK])
             protocol.send_data(self.connection, self.local_player_color)
         else:
