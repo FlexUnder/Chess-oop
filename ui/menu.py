@@ -1,3 +1,4 @@
+import re
 import base
 
 from ui import console
@@ -47,22 +48,25 @@ def selection_loop(choose_function, converter, is_valid):
         console.clear_console()
         console.print_logo()
         game_option = choose_function()
-        print('valid not None')
         if is_valid(game_option):
-            print('Некорректный ввод. Введите Enter')
-            input()
-            continue
-        else:
             if game_option in converter.keys():
                 return converter[game_option]
             else:
                 return game_option
+        else:
+            print('Некорректный ввод. Введите Enter')
+            input()
+            continue
         # else:
         #     if game_option in converter.keys():
         #         return converter[game_option]
         #     else:
         #         return game_option
 
+
+def is_ip_valid(input_ip):
+    ip_pattern = r'^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$'
+    return bool(re.match(ip_pattern, input_ip)) or input_ip == 'q'
 
 
 def start():
@@ -78,11 +82,11 @@ def start():
         if mode == 'online':
             network_type = selection_loop(get_network_type, base.network_menu, lambda x: x in list(map(str, range(1, 4))))
             if network_type == 'client':
-                network_config = network_type, selection_loop(get_connection_ip, base.connection_menu, )
+                network_config = network_type, selection_loop(get_connection_ip, base.connection_menu, is_ip_valid)
             if network_type == 'server':
                 network_config = network_type, None
 
-        if mode != 'back' and network_type != 'back':
+        if mode != 'back' and network_type != 'back' and network_config[1] != 'back':
             break
     print(variant, mode, network_config)
     return variant, mode, network_config
