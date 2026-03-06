@@ -7,12 +7,26 @@ from variants.classic.board import Board
 
 class Rules:
     def get_legal_moves(self, board: Board, x, y, player_color):
+        moves = self.get_piece_moves(board, x, y, player_color)
+        legal_moves = []
+        for move in moves:
+            supposed_board = copy.deepcopy(board)
+            supposed_board.apply_move(x, y, move[0], move[1])
+
+            if not self.is_in_check(supposed_board, player_color):
+                legal_moves.append(move)
+
+        return legal_moves
+
+
+    def get_piece_moves(self, board: Board, x, y, player_color):
         piece = board.get_piece(x, y)
 
         if isinstance(piece, pieces.Pawn):
             return self.generate_pawn_moves(board, x, y)
+        else:
+            return self.generate_moves(board, x, y, player_color)
 
-        return self.generate_moves(board, x, y, player_color)
 
     def generate_moves(self, board, x, y, player_color):
         piece = board.get_piece(x, y)
@@ -25,13 +39,11 @@ class Rules:
         for dx, dy in piece.directions:
 
             max_steps = 7 if piece.sliding else 1
-            print(piece.sliding)
             for step in range(1, max_steps + 1):
 
                 x_new = x + dx * step
                 y_new = y + dy * step
 
-                print(x_new, y_new)
                 if not board.is_position_in_bounds(x_new, y_new):
                     continue
 
@@ -53,11 +65,8 @@ class Rules:
 
         if target_square and target_square.color == player_color:
             return False
-
-        supposed_board = copy.deepcopy(board)
-        supposed_board.apply_move(x, y, x_new, y_new)
-
-        return not self.is_in_check(supposed_board, player_color)
+        return True
+        # return not self.is_in_check(supposed_board, player_color)
 
 
     def generate_pawn_moves(self, board: Board, x, y):
@@ -109,7 +118,7 @@ class Rules:
             for x in range(8):
                 piece = board.get_piece(x, y)
                 if piece and piece.color == opponent_color:
-                    if king_position in self.get_legal_moves(board, x, y, color):
+                    if king_position in self.get_piece_moves(board, x, y, opponent_color):
                         return True
         return False
 
