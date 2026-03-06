@@ -18,11 +18,25 @@ def get_default_local_ip():
 
 
 def find_hamachi_ips():
-    hamachi_net = ipaddress.ip_network("25.0.0.0/8")
+    ips = find_specific_ips('25.0.0.0/8', ['hamachi', 'logmein', 'ham'])
+    if ips:
+        return ips[0]
+    return None
+
+
+def find_radmin_ips():
+    ips = find_specific_ips('26.0.0.0/8', ['radmin', 'vpn'])
+    if ips:
+        return ips[0]
+    return None
+
+
+def find_specific_ips(ip_mask, tokens):
+    hamachi_net = ipaddress.ip_network(ip_mask)
     result = []
     for adapter in ifaddr.get_adapters():
         name = (adapter.nice_name or "").lower()
-        name_hint = any(tok in name for tok in ("hamachi", "logmein", "ham"))
+        name_hint = any(token in name for token in tokens)
         for ipinfo in adapter.ips:
             addr = ipinfo.ip
             if isinstance(addr, tuple):
@@ -32,27 +46,6 @@ def find_hamachi_ips():
             except ValueError:
                 continue
             if ip_obj.version == 4 and ip_obj in hamachi_net:
-                result.append(str(ip_obj))
-            elif ip_obj.version == 4 and name_hint:
-                result.append(str(ip_obj))
-    return list(dict.fromkeys(result))
-
-
-def find_radmin_ips():
-    radmin_net = ipaddress.ip_network("26.0.0.0/8")
-    result = []
-    for adapter in ifaddr.get_adapters():
-        name = (adapter.nice_name or "").lower()
-        name_hint = any(tok in name for tok in ("radmin", "vpn"))
-        for ipinfo in adapter.ips:
-            addr = ipinfo.ip
-            if isinstance(addr, tuple):
-                addr = addr[0]
-            try:
-                ip_obj = ipaddress.ip_address(addr)
-            except ValueError:
-                continue
-            if ip_obj.version == 4 and ip_obj in radmin_net:
                 result.append(str(ip_obj))
             elif ip_obj.version == 4 and name_hint:
                 result.append(str(ip_obj))

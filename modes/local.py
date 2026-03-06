@@ -1,5 +1,4 @@
 from base import WHITE, BLACK
-from ui import utils as ui_utils
 from ui import console
 from modes import base
 
@@ -10,8 +9,8 @@ class Mode(base.GameMode):
 
     def run(self):
         while True:
-            ui_utils.clear_console()
-            ui_utils.print_logo()
+            console.clear_console()
+            console.print_logo()
             self.render.print_board(self.board)
 
             raw_input = console.get_player_input(self.turn)

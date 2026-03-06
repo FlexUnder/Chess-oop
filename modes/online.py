@@ -3,7 +3,6 @@ import random
 from network import server, client, protocol
 from base import WHITE, BLACK
 from base import SERVER, CLIENT
-from ui import utils as ui_utils
 from ui import console
 from modes import base
 
@@ -11,19 +10,21 @@ from modes import base
 class Mode(base.GameMode):
     def __init__(self, board, rules, render, network_config):
         super().__init__(board, rules, render)
-        self.network_type = network_config[0]
+        self.network_type, self.connection_ip = network_config[0], network_config[1]
         self.turn = WHITE
         self.local_player_color = 'Not defined'
+        self.connection = None
+        self._init_connection()
+
+    def _init_connection(self):
         if self.network_type == SERVER:
             self.socket, self.default_ip, self.hamachi_ip, self.radmin_ip = server.start()
         else:
-            self.connection = client.connect_to_server(network_config[1])
+            self.connection = client.connect_to_server(self.connection_ip)
 
     def run(self):
         if self.network_type == SERVER:
-            console.print_center(f'iP: {self.default_ip}')
-            console.print_center(f'Hamachi:{self.hamachi_ip}' if self.hamachi_ip else '')
-            console.print_center(f'Radmin:{self.radmin_ip}' if self.radmin_ip else '')
+            self.output_ips()
             self.connection = server.accept_connections(self.socket)
             self.local_player_color = random.choice([WHITE, BLACK])
             protocol.send_data(self.connection, self.local_player_color)
@@ -32,8 +33,8 @@ class Mode(base.GameMode):
             self.local_player_color = BLACK if opponent_color == WHITE else WHITE
 
         while True:
-            ui_utils.clear_console()
-            ui_utils.print_logo()
+            console.clear_console()
+            console.print_logo()
             self.render.print_board(self.board)
 
             if self.turn == self.local_player_color:
@@ -67,12 +68,20 @@ class Mode(base.GameMode):
                 # if self.rules.is_stalemate(self.board, self.current_player):
                 #     print("Пат!")
                 #     break
-    def init_connection(self):
-        return
 
     def handle_input_error(self, message):
         print('\n' * 3 + '\t' * 4 + message)
         input('\n' + '\t' * 4 + 'Нажмите Enter чтобы продолжить...')
+
+    def output_ips(self):
+        console.clear_console()
+        console.print_logo()
+        console.print_center('\n\n\n\n\n\niP для подключения:')
+        console.print_center(f'\nDefault: {self.default_ip}', 1)
+        if self.hamachi_ip is not None:
+            console.print_center(f'Hamachi: {self.hamachi_ip}', 1)
+        if self.radmin_ip is not None:
+            console.print_center(f'Radmin: {self.radmin_ip}', 1)
 
     def switch_turn(self):
         self.turn = BLACK if self.turn == WHITE else WHITE

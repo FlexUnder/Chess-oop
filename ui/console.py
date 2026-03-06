@@ -1,4 +1,20 @@
+import os
+import platform
+
 from base import WHITE
+
+
+def clear_console():
+    system = platform.system().lower()
+    if system == "windows":
+        os.system('cls')
+    else:
+        os.system('clear')
+
+
+def print_logo():
+    print(''.join(open('assets/logo_mini.txt').readlines()))
+    print('\n')
 
 
 def get_player_input(color):
