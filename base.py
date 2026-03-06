@@ -13,3 +13,5 @@ connection_menu = {'q': 'back'}
 
 SERVER = 'server'
 CLIENT = 'client'
+
+color_converter = {WHITE: 'белые', BLACK: 'черные'}

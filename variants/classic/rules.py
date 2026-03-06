@@ -1,6 +1,6 @@
 import copy
+import base
 
-from base import WHITE, BLACK
 from variants.classic import pieces
 from variants.classic.board import Board
 
@@ -90,12 +90,20 @@ class Rules:
         return True if y == 1 or y == 6 else False
 
 
+    def get_game_finish_message(self, board, color):
+        if self.is_checkmate(board, color):
+            return f'Игра окончена. Шах и мат! Победа {base.color_converter(color)}'
+        if self.is_stalemate(board, color):
+            return 'Игра окончена. Пат!'
+        return False
+
+
     def is_in_check(self, board, color):
         king_position = board.get_king_position(color)
         if not king_position:
             return False
 
-        opponent_color = BLACK if color == WHITE else WHITE
+        opponent_color = base.BLACK if color == base.WHITE else base.WHITE
 
         for y in range(8):
             for x in range(8):

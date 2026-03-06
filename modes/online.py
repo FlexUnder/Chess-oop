@@ -61,8 +61,9 @@ class Mode(base.GameMode):
                 self.board.apply_move(x_from, y_from, x_to, y_to)
             self.switch_turn()
 
-            if self.rules.is_checkmate(self.board, self.turn):
-                print("Шах и мат!")
+            finish_message = self.rules.get_game_finish_message(self.board, self.turn)
+            if finish_message:
+                print(finish_message)
                 break
 
                 # if self.rules.is_stalemate(self.board, self.current_player):

@@ -85,8 +85,10 @@ def start():
                 network_config = network_type, selection_loop(get_connection_ip, base.connection_menu, is_ip_valid)
             if network_type == 'server':
                 network_config = network_type, None
+            if network_config[1] == 'back':
+                continue
 
-        if mode != 'back' and network_type != 'back' and network_config[1] != 'back':
+        if mode != 'back' and network_type != 'back':
             break
     print(variant, mode, network_config)
     return variant, mode, network_config
