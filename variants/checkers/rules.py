@@ -1,220 +1,184 @@
-import copy
-from variants.classic import pieces
-from variants.classic.board import Board
+import importlib
+import base
+
+pieces = importlib.import_module('variants.checkers.pieces')
 
 
 class Rules:
-    def get_legal_moves(self, board: Board, x, y, player_color):
-        """Получение всех легальных ходов для фигуры"""
-        piece = board.get_piece(x, y)
+    """
+    Возвращает ходы в формате [(x, y), ...] — совместимо с modes/local.py и online.py.
+    Информация о взятии хранится в self._capture_map: {(fx,fy,tx,ty): (cap_x,cap_y)}.
+    board.apply_move() вызывается из mode с теми же аргументами что и в шахматах,
+    но Board.apply_move() у шашек дополнительно удаляет съеденную шашку через этот словарь.
+    """
 
+    def __init__(self):
+        # Словарь взятий: ключ (fx, fy, tx, ty) -> (cap_x, cap_y) или None
+        self._capture_map: dict = {}
+
+    # ------------------------------------------------------------------ #
+    #  Публичный интерфейс (совместимый с шахматным mode)                 #
+    # ------------------------------------------------------------------ #
+
+    def get_legal_moves(self, board, x, y, player_color):
+        """
+        Возвращает [(tx, ty), ...].
+        Побочно заполняет self._capture_map для текущей шашки.
+        Обязательное взятие: если хоть у одной шашки игрока есть бой —
+        разрешены только бьющие ходы.
+        """
+        piece = board.get_piece(x, y)
         if not piece or piece.color != player_color:
             return []
 
-        # Сначала проверяем, есть ли обязательные ходы с взятием
-        capture_moves = self.get_all_capture_moves(board, player_color)
+        any_capture = self._player_has_capture(board, player_color)
 
-        # Если есть ходы с взятием, другие ходы недоступны
-        if capture_moves:
-            # Возвращаем только ходы с взятием для этой фигуры
-            piece_captures = [move for move in capture_moves if move[:2] == (x, y)]
-            return piece_captures
-
-        # Если нет ходов с взятием, возвращаем обычные ходы
-        return self.generate_regular_moves(board, x, y, player_color)
-
-    def generate_regular_moves(self, board, x, y, player_color):
-        """Генерация обычных ходов (без взятия)"""
-        piece = board.get_piece(x, y)
-        moves = []
-
-        # Определяем направления в зависимости от типа фигуры
-        if piece.is_king:
-            # Дамка может ходить во все стороны
-            directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        if any_capture:
+            raw = self._get_capture_moves(board, x, y, player_color)
         else:
-            # Обычная шашка ходит только вперед
-            if piece.color == 'black':
-                directions = [(1, -1), (1, 1)]  # Черные вниз
-            else:
-                directions = [(-1, -1), (-1, 1)]  # Белые вверх
+            raw = self._get_quiet_moves(board, x, y, player_color)
 
-        for dx, dy in directions:
-            new_x, new_y = x + dx, y + dy
-
-            if not board.is_position_in_bounds(new_x, new_y):
-                continue
-
-            target = board.get_piece(new_x, new_y)
-
-            # Клетка должна быть пустой
-            if target is None:
-                moves.append((new_x, new_y))
+        moves = []
+        for tx, ty, cap_x, cap_y in raw:
+            self._capture_map[(x, y, tx, ty)] = (cap_x, cap_y) if cap_x is not None else None
+            moves.append((tx, ty))
 
         return moves
 
-    def get_all_capture_moves(self, board, player_color):
-        """Получение всех возможных ходов с взятием для игрока"""
-        capture_moves = []
+    def get_game_finish_message(self, board, color):
+        if self._is_loss(board, color):
+            opponent = base.BLACK if color == base.WHITE else base.WHITE
+            winner = base.color_converter(opponent)
+            return f'Игра окончена. Победа {winner}!'
+        return False
 
+    def is_checkmate(self, board, color):
+        """Заглушка для совместимости с modes/local.py — в шашках нет шаха."""
+        return self._is_loss(board, color)
+
+    def is_stalemate(self, board, color):
+        """Заглушка для совместимости с modes/local.py — в шашках пат = проигрыш."""
+        return False
+
+    # ------------------------------------------------------------------ #
+    #  Применение хода — вызывается из Board, знает о взятии              #
+    # ------------------------------------------------------------------ #
+
+    def prepare_move(self, board, fx, fy, tx, ty):
+        """
+        Вызывается из mode перед board.apply_move().
+        Возвращает (cap_x, cap_y) если ход — взятие, иначе (None, None).
+        Также превращает шашку в дамку после хода.
+        """
+        cap = self._capture_map.get((fx, fy, tx, ty))
+        cap_x, cap_y = cap if cap else (None, None)
+        return cap_x, cap_y
+
+    def after_move(self, board, tx, ty):
+        """Вызывается после board.apply_move() — превращает шашку в дамку."""
+        board.promote_if_needed(tx, ty)
+
+    # ------------------------------------------------------------------ #
+    #  Конец игры                                                         #
+    # ------------------------------------------------------------------ #
+
+    def _is_loss(self, board, color):
+        for y in range(8):
+            for x in range(8):
+                piece = board.get_piece(x, y)
+                if piece and piece.color == color:
+                    if self.get_legal_moves(board, x, y, color):
+                        return False
+        return True
+
+    # ------------------------------------------------------------------ #
+    #  Тихие ходы                                                         #
+    # ------------------------------------------------------------------ #
+
+    def _get_quiet_moves(self, board, x, y, player_color):
+        piece = board.get_piece(x, y)
+        if isinstance(piece, pieces.King):
+            return self._king_quiet_moves(board, x, y)
+        return self._man_quiet_moves(board, x, y, piece)
+
+    def _man_quiet_moves(self, board, x, y, piece):
+        moves = []
+        for dx in [-1, 1]:
+            nx, ny = x + dx, y + piece.direction
+            if board.is_empty(nx, ny):
+                moves.append((nx, ny, None, None))
+        return moves
+
+    def _king_quiet_moves(self, board, x, y):
+        moves = []
+        for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+            step = 1
+            while True:
+                nx, ny = x + dx * step, y + dy * step
+                if not board.is_position_in_bounds(nx, ny):
+                    break
+                if board.is_empty(nx, ny):
+                    moves.append((nx, ny, None, None))
+                    step += 1
+                else:
+                    break
+        return moves
+
+    # ------------------------------------------------------------------ #
+    #  Бьющие ходы                                                        #
+    # ------------------------------------------------------------------ #
+
+    def _player_has_capture(self, board, player_color):
         for y in range(8):
             for x in range(8):
                 piece = board.get_piece(x, y)
                 if piece and piece.color == player_color:
-                    captures = self.generate_capture_moves(board, x, y, player_color)
-                    capture_moves.extend(captures)
+                    if self._get_capture_moves(board, x, y, player_color):
+                        return True
+        return False
 
-        return capture_moves
-
-    def generate_capture_moves(self, board, x, y, player_color, is_continuation=False):
-        """Генерация ходов с взятием (включая множественные взятия)"""
+    def _get_capture_moves(self, board, x, y, player_color):
         piece = board.get_piece(x, y)
-        capture_moves = []
+        if not piece or piece.color != player_color:
+            return []
+        if isinstance(piece, pieces.King):
+            return self._king_captures(board, x, y, player_color, set())
+        return self._man_captures(board, x, y, player_color, set())
 
-        # Определяем все возможные направления для взятия
-        if piece.is_king:
-            directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
-        else:
-            if piece.color == 'black':
-                directions = [(1, -1), (1, 1)]  # Черные могут бить вперед
-            else:
-                directions = [(-1, -1), (-1, 1)]  # Белые могут бить вперед
-
-        for dx, dy in directions:
-            # Проверяем клетку с врагом
-            enemy_x, enemy_y = x + dx, y + dy
-            if not board.is_position_in_bounds(enemy_x, enemy_y):
+    def _man_captures(self, board, x, y, player_color, visited: set):
+        moves = []
+        for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+            ex, ey = x + dx, y + dy
+            lx, ly = x + 2 * dx, y + 2 * dy
+            if not board.is_position_in_bounds(lx, ly):
                 continue
+            if not board.is_enemy(ex, ey, player_color):
+                continue
+            if not board.is_empty(lx, ly):
+                continue
+            if (ex, ey) in visited:
+                continue
+            moves.append((lx, ly, ex, ey))
+        return moves
 
-            enemy = board.get_piece(enemy_x, enemy_y)
-
-            # Проверяем, есть ли враг
-            if enemy and enemy.color != player_color:
-                # Проверяем клетку за врагом
-                landing_x, landing_y = enemy_x + dx, enemy_y + dy
-
-                if not board.is_position_in_bounds(landing_x, landing_y):
-                    continue
-
-                landing = board.get_piece(landing_x, landing_y)
-
-                # Клетка за врагом должна быть пустой
-                if landing is None:
-                    # Для дамки нужно проверить, что между начальной и конечной позицией нет других фигур
-                    if piece.is_king:
-                        # Проверяем, что нет других фигур на пути кроме врага
-                        if not self.has_obstacles_between(board, x, y, landing_x, landing_y, enemy_x, enemy_y):
-                            # Создаем временную доску для проверки множественных взятий
-                            temp_board = copy.deepcopy(board)
-                            temp_board.apply_move(x, y, landing_x, landing_y, capture=True)
-
-                            # Проверяем, может ли фигура бить дальше
-                            further_captures = self.generate_capture_moves(
-                                temp_board, landing_x, landing_y, player_color, is_continuation=True
-                            )
-
-                            if further_captures:
-                                # Добавляем все комбинации с множественными взятиями
-                                for capture_sequence in further_captures:
-                                    capture_moves.append((x, y, landing_x, landing_y, *capture_sequence[2:]))
-                            else:
-                                capture_moves.append((x, y, landing_x, landing_y))
-                    else:
-                        # Для обычной шашки
-                        temp_board = copy.deepcopy(board)
-                        temp_board.apply_move(x, y, landing_x, landing_y, capture=True)
-
-                        # Проверяем, может ли шашка бить дальше
-                        further_captures = self.generate_capture_moves(
-                            temp_board, landing_x, landing_y, player_color, is_continuation=True
-                        )
-
-                        if further_captures:
-                            for capture_sequence in further_captures:
-                                capture_moves.append((x, y, landing_x, landing_y, *capture_sequence[2:]))
-                        else:
-                            capture_moves.append((x, y, landing_x, landing_y))
-
-        return capture_moves
-
-    def has_obstacles_between(self, board, x1, y1, x2, y2, enemy_x, enemy_y):
-        """Проверка наличия препятствий между клетками для дамки"""
-        dx = 1 if x2 > x1 else -1
-        dy = 1 if y2 > y1 else -1
-
-        x, y = x1 + dx, y1 + dy
-        while (x, y) != (x2, y2):
-            if (x, y) != (enemy_x, enemy_y):  # Пропускаем врага
-                if board.get_piece(x, y) is not None:
-                    return True
-            x += dx
-            y += dy
-
-        return False
-
-    def is_legal_move(self, board, x1, y1, x2, y2, player_color):
-        """Проверка, является ли ход легальным"""
-        legal_moves = self.get_legal_moves(board, x1, y1, player_color)
-
-        for move in legal_moves:
-            if len(move) == 2 and move == (x2, y2):
-                return True
-            elif len(move) >= 4 and move[0] == x1 and move[1] == y1 and move[2] == x2 and move[3] == y2:
-                return True
-
-        return False
-
-    def can_promote(self, board, x, y):
-        """Проверка, может ли шашка стать дамкой"""
-        piece = board.get_piece(x, y)
-        if piece and not piece.is_king:
-            # Черные шашки становятся дамками на последней линии (7)
-            if piece.color == 'black' and y == 7:
-                return True
-            # Белые шашки становятся дамками на последней линии (0)
-            if piece.color == 'white' and y == 0:
-                return True
-        return False
-
-    def has_mandatory_captures(self, board, player_color):
-        """Проверка наличия обязательных взятий"""
-        capture_moves = self.get_all_capture_moves(board, player_color)
-        return len(capture_moves) > 0
-
-    def is_game_over(self, board, player_color):
-        """Проверка окончания игры"""
-        # Проверяем, есть ли у игрока ходы
-        has_moves = False
-
-        for y in range(8):
-            for x in range(8):
-                piece = board.get_piece(x, y)
-                if piece and piece.color == player_color:
-                    if self.get_legal_moves(board, x, y, player_color):
-                        has_moves = True
+    def _king_captures(self, board, x, y, player_color, visited: set):
+        moves = []
+        for dx, dy in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+            step = 1
+            enemy_pos = None
+            while True:
+                nx, ny = x + dx * step, y + dy * step
+                if not board.is_position_in_bounds(nx, ny):
+                    break
+                cell = board.get_piece(nx, ny)
+                if cell is None:
+                    if enemy_pos and enemy_pos not in visited:
+                        moves.append((nx, ny, enemy_pos[0], enemy_pos[1]))
+                elif cell.color != player_color:
+                    if enemy_pos:
                         break
-            if has_moves:
-                break
-
-        return not has_moves
-
-    def get_winner(self, board):
-        """Определение победителя"""
-        black_pieces = 0
-        white_pieces = 0
-
-        for y in range(8):
-            for x in range(8):
-                piece = board.get_piece(x, y)
-                if piece:
-                    if piece.color == 'black':
-                        black_pieces += 1
-                    else:
-                        white_pieces += 1
-
-        if black_pieces == 0:
-            return 'white'
-        elif white_pieces == 0:
-            return 'black'
-        else:
-            return None
+                    enemy_pos = (nx, ny)
+                else:
+                    break
+                step += 1
+        return moves

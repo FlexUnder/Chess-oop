@@ -1,30 +1,29 @@
-from base import WHITE, BLACK
+from base import WHITE
+
 
 class Piece:
     def __init__(self, color):
         self.symbol = 'E'
         self.color = color
-        self.sliding = True
-        self.is_king = False
+        self.sliding = False
 
     def __repr__(self):
         return self.symbol
 
-class Checker(Piece):
+
+class Man(Piece):
     """Обычная шашка"""
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = 'B' if color == BLACK else 'W'  # B для Black, W для White
+        self.symbol = '●'
         self.sliding = False
-        self.is_king = False
-        self.directions = [(1 if color == BLACK else -1, -1), 
-                          (1 if color == BLACK else -1, 1)]
+        self.direction = -1 if color == WHITE else 1
 
-class CheckerKing(Piece):
-    """Дамка (наследуется от Piece)"""
+
+class King(Piece):
+    """Дамка — ходит по диагонали на любое расстояние"""
     def __init__(self, color):
         super().__init__(color)
-        self.symbol = 'KB' if color == BLACK else 'KW'  # KB для Black King, KW для White King
+        self.symbol = '♔'
         self.sliding = True
-        self.is_king = True
         self.directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]

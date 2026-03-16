@@ -7,6 +7,11 @@ class Game:
         board = variant.setup.create_board()
         rules = variant.rules.Rules()
         render = variant.render.Render()
+
+        # Хук для вариантов которым нужна связь между объектами (например шашки)
+        if hasattr(variant, 'after_init'):
+            variant.after_init(board, rules)
+
         self.mode = self.create_mode(mode_name, board, rules, render, network_config)
 
     def load_variant(self, variant_name):
