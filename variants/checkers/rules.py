@@ -1,3 +1,4 @@
+import copy
 import importlib
 import base
 
@@ -6,44 +7,41 @@ pieces = importlib.import_module('variants.checkers.pieces')
 
 class Rules:
     """
-    Возвращает ходы в формате [(x, y), ...] — совместимо с modes/local.py и online.py.
-    Информация о взятии хранится в self._capture_map: {(fx,fy,tx,ty): (cap_x,cap_y)}.
-    board.apply_move() вызывается из mode с теми же аргументами что и в шахматах,
-    но Board.apply_move() у шашек дополнительно удаляет съеденную шашку через этот словарь.
+    get_legal_moves возвращает [(tx, ty), ...] — конечные точки всей цепочки взятий.
+    _capture_map хранит полный маршрут: (fx,fy,tx,ty) -> [(cap_x,cap_y,land_x,land_y), ...]
+    board.apply_move(fx,fy,tx,ty) применяет весь маршрут за один вызов.
     """
 
     def __init__(self):
-        # Словарь взятий: ключ (fx, fy, tx, ty) -> (cap_x, cap_y) или None
         self._capture_map: dict = {}
 
     # ------------------------------------------------------------------ #
-    #  Публичный интерфейс (совместимый с шахматным mode)                 #
+    #  Интерфейс                                                 #
     # ------------------------------------------------------------------ #
 
     def get_legal_moves(self, board, x, y, player_color):
-        """
-        Возвращает [(tx, ty), ...].
-        Побочно заполняет self._capture_map для текущей шашки.
-        Обязательное взятие: если хоть у одной шашки игрока есть бой —
-        разрешены только бьющие ходы.
-        """
         piece = board.get_piece(x, y)
         if not piece or piece.color != player_color:
             return []
 
-        any_capture = self._player_has_capture(board, player_color)
+        self._capture_map = {}
 
-        if any_capture:
-            raw = self._get_capture_moves(board, x, y, player_color)
+        if self._player_has_capture(board, player_color):
+            chains = self._build_capture_chains(board, x, y, player_color)
+            moves = []
+            for chain in chains:
+                # chain = [(cap_x,cap_y,land_x,land_y), ...]
+                tx, ty = chain[-1][2], chain[-1][3]
+                self._capture_map[(x, y, tx, ty)] = chain
+                moves.append((tx, ty))
+            return moves
         else:
             raw = self._get_quiet_moves(board, x, y, player_color)
-
-        moves = []
-        for tx, ty, cap_x, cap_y in raw:
-            self._capture_map[(x, y, tx, ty)] = (cap_x, cap_y) if cap_x is not None else None
-            moves.append((tx, ty))
-
-        return moves
+            moves = []
+            for tx, ty, _, _ in raw:
+                self._capture_map[(x, y, tx, ty)] = None
+                moves.append((tx, ty))
+            return moves
 
     def get_game_finish_message(self, board, color):
         if self._is_loss(board, color):
@@ -53,30 +51,10 @@ class Rules:
         return False
 
     def is_checkmate(self, board, color):
-        """Заглушка для совместимости с modes/local.py — в шашках нет шаха."""
         return self._is_loss(board, color)
 
     def is_stalemate(self, board, color):
-        """Заглушка для совместимости с modes/local.py — в шашках пат = проигрыш."""
         return False
-
-    # ------------------------------------------------------------------ #
-    #  Применение хода — вызывается из Board, знает о взятии              #
-    # ------------------------------------------------------------------ #
-
-    def prepare_move(self, board, fx, fy, tx, ty):
-        """
-        Вызывается из mode перед board.apply_move().
-        Возвращает (cap_x, cap_y) если ход — взятие, иначе (None, None).
-        Также превращает шашку в дамку после хода.
-        """
-        cap = self._capture_map.get((fx, fy, tx, ty))
-        cap_x, cap_y = cap if cap else (None, None)
-        return cap_x, cap_y
-
-    def after_move(self, board, tx, ty):
-        """Вызывается после board.apply_move() — превращает шашку в дамку."""
-        board.promote_if_needed(tx, ty)
 
     # ------------------------------------------------------------------ #
     #  Конец игры                                                         #
@@ -90,6 +68,41 @@ class Rules:
                     if self.get_legal_moves(board, x, y, color):
                         return False
         return True
+
+    # ------------------------------------------------------------------ #
+    #  Построение цепочек взятий                                          #
+    # ------------------------------------------------------------------ #
+
+    def _build_capture_chains(self, board, x, y, player_color):
+        """
+        Возвращает список цепочек. Каждая цепочка — список шагов:
+        [(cap_x, cap_y, land_x, land_y), ...]
+        """
+        piece = board.get_piece(x, y)
+        if isinstance(piece, pieces.King):
+            single_captures = self._king_captures(board, x, y, player_color, set())
+        else:
+            single_captures = self._man_captures(board, x, y, player_color, set())
+
+        if not single_captures:
+            return []
+
+        result = []
+        for lx, ly, ex, ey in single_captures:
+            step = (ex, ey, lx, ly)
+            # Применяем ход на копии доски и рекурсивно ищем продолжения
+            board_copy = copy.deepcopy(board)
+            board_copy.apply_move_simple(x, y, lx, ly, ex, ey)
+            board_copy.promote_if_needed(lx, ly)
+
+            further = self._build_capture_chains(board_copy, lx, ly, player_color)
+            if further:
+                for chain in further:
+                    result.append([step] + chain)
+            else:
+                result.append([step])
+
+        return result
 
     # ------------------------------------------------------------------ #
     #  Тихие ходы                                                         #
@@ -125,7 +138,7 @@ class Rules:
         return moves
 
     # ------------------------------------------------------------------ #
-    #  Бьющие ходы                                                        #
+    #  Бьющие ходы (одиночные)                                            #
     # ------------------------------------------------------------------ #
 
     def _player_has_capture(self, board, player_color):

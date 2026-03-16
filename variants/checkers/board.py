@@ -3,13 +3,11 @@ pieces = importlib.import_module('variants.checkers.pieces')
 
 
 class Move:
-    def __init__(self, from_x, from_y, to_x, to_y, captured_x=None, captured_y=None):
+    def __init__(self, from_x, from_y, to_x, to_y):
         self.from_x = from_x
         self.from_y = from_y
         self.to_x = to_x
         self.to_y = to_y
-        self.captured_x = captured_x
-        self.captured_y = captured_y
 
 
 class Board:
@@ -17,9 +15,7 @@ class Board:
         self.field = [[None for _ in range(rows)] for _ in range(cols)]
         self.width = rows
         self.length = cols
-        # Ссылка на rules — устанавливается в setup.create_board()
-        # Нужна чтобы apply_move мог достать информацию о взятии
-        self._rules = None
+        self._rules = None  # устанавливается через setup.link_rules()
 
     def get_piece(self, x, y):
         return self.field[y][x]
@@ -32,25 +28,33 @@ class Board:
                             " Для передвижения фигур используй apply_move(), а не set()")
 
     def apply_move(self, fx, fy, tx, ty) -> Move:
-        # Достаём информацию о взятии из rules если есть
-        cap_x, cap_y = None, None
+        """
+        Применяет ход. Если в rules._capture_map есть цепочка взятий для этого хода —
+        применяет все шаги цепочки последовательно. Иначе — обычный ход.
+        """
         if self._rules is not None:
-            cap = self._rules._capture_map.get((fx, fy, tx, ty))
-            if cap:
-                cap_x, cap_y = cap
+            chain = self._rules._capture_map.get((fx, fy, tx, ty))
+            if chain:
+                # Применяем каждый шаг цепочки
+                cx, cy = fx, fy
+                for cap_x, cap_y, land_x, land_y in chain:
+                    self.apply_move_simple(cx, cy, land_x, land_y, cap_x, cap_y)
+                    self.promote_if_needed(land_x, land_y)
+                    cx, cy = land_x, land_y
+                return Move(fx, fy, tx, ty)
 
-        move = Move(fx, fy, tx, ty, cap_x, cap_y)
+        # Обычный ход (без взятия)
         self.field[ty][tx] = self.field[fy][fx]
         self.field[fy][fx] = None
+        self.promote_if_needed(tx, ty)
+        return Move(fx, fy, tx, ty)
 
-        # Убираем съеденную шашку
+    def apply_move_simple(self, fx, fy, tx, ty, cap_x=None, cap_y=None):
+        """Внутренний метод: перемещает шашку и убирает съеденную."""
+        self.field[ty][tx] = self.field[fy][fx]
+        self.field[fy][fx] = None
         if cap_x is not None and cap_y is not None:
             self.field[cap_y][cap_x] = None
-
-        # Превращение в дамку
-        self.promote_if_needed(tx, ty)
-
-        return move
 
     def is_position_in_bounds(self, x, y) -> bool:
         return 0 <= y < self.width and 0 <= x < self.length
@@ -67,7 +71,6 @@ class Board:
         return piece is not None and piece.color != player_color
 
     def promote_if_needed(self, x, y):
-        """Превращает шашку в дамку, если она достигла последней горизонтали."""
         piece = self.field[y][x]
         if piece is None:
             return
