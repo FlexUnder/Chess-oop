@@ -28,10 +28,14 @@ class Rules:
 
         if self._player_has_capture(board, player_color):
             chains = self._build_capture_chains(board, x, y, player_color)
-            moves = []
+            # Если несколько цепочек ведут в одну точку — берём самую длинную
+            best: dict = {}  # (tx, ty) -> лучшая цепочка
             for chain in chains:
-                # chain = [(cap_x,cap_y,land_x,land_y), ...]
                 tx, ty = chain[-1][2], chain[-1][3]
+                if (tx, ty) not in best or len(chain) > len(best[(tx, ty)]):
+                    best[(tx, ty)] = chain
+            moves = []
+            for (tx, ty), chain in best.items():
                 self._capture_map[(x, y, tx, ty)] = chain
                 moves.append((tx, ty))
             return moves
