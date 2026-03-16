@@ -101,7 +101,7 @@ class Rules:
 
     def get_game_finish_message(self, board, color):
         if self.is_checkmate(board, color):
-            return f'Игра окончена. Шах и мат! Победа {base.color_converter(color)}'
+            return f'Игра окончена. Шах и мат! Победа {base.color_converter[color]}'
         if self.is_stalemate(board, color):
             return 'Игра окончена. Пат!'
         return False
