@@ -41,12 +41,12 @@ class Mode(base.GameMode):
                 raw_input = console.get_player_input(self.turn)
                 normalized = self.normalize_input(raw_input)
                 if not normalized:
-                    self.handle_input_error('Неверный формат! Примеры: e2 e4, e2e4, а2 а4')
+                    self.handle_input_error('Неверный формат! Формат хода: пара [a-h][1-8].\nПримеры: e2 e4, e2e4, а2 а4')
                     continue
                 x_from, y_from, x_to, y_to = self.parse_input(normalized)
                 legal_moves = self.rules.get_legal_moves(self.board, x_from, y_from, self.turn)
                 if (x_to, y_to) not in legal_moves:
-                    self.handle_input_error('Невозможный ход!')
+                    self.handle_input_error('Фигура не может сделать ход на эту клетку!')
                     continue
 
                 self.board.apply_move(x_from, y_from, x_to, y_to)
@@ -59,6 +59,7 @@ class Mode(base.GameMode):
                 print(opponent_move)
                 x_from, y_from, x_to, y_to = opponent_move
                 self.board.apply_move(x_from, y_from, x_to, y_to)
+
             self.switch_turn()
 
             finish_message = self.rules.get_game_finish_message(self.board, self.turn)

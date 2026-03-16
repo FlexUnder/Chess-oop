@@ -8,7 +8,7 @@ def get_variant():
     print('\n' * 4)
     console.print_center('Выберите вид игры:')
     console.print_center('1.♟️ Классические шахматы')
-    console.print_center('2.3️⃣ Шахматы на троих')
+    console.print_center('2.👌 Шахматы на троих')
     console.print_center('3.🛠️ Шахматы с модификациями')
     console.print_center('4.🧨 Шашки\n')
     variant = input('\t' * 4 + '  > ')

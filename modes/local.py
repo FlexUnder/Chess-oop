@@ -16,27 +16,24 @@ class Mode(base.GameMode):
             raw_input = console.get_player_input(self.turn)
             normalized = self.normalize_input(raw_input)
             if not normalized:
-                self.handle_input_error('Неверный формат! Примеры: e2 e4, e2e4, а2 а4')
+                self.handle_input_error('Неверный формат! Формат хода: пара [a-h][1-8].\nПримеры: e2 e4, e2e4, а2 а4')
                 continue
             x_from, y_from, x_to, y_to = self.parse_input(normalized)
             print(x_from, y_from, x_to, y_to)
             legal_moves = self.rules.get_legal_moves(self.board, x_from, y_from, self.turn)
             print(legal_moves)
             if (x_to, y_to) not in legal_moves:
-                self.handle_input_error('Невозможный ход!')
+                self.handle_input_error('Фигура не может сделать ход на эту клетку!')
                 continue
 
             self.board.apply_move(x_from, y_from, x_to, y_to)
 
             self.switch_player()
 
-            if self.rules.is_checkmate(self.board, self.turn):
-                print("Шах и мат!")
+            finish_message = self.rules.get_game_finish_message(self.board, self.turn)
+            if finish_message:
+                print(finish_message)
                 break
-
-            # if self.rules.is_stalemate(self.board, self.current_player):
-            #     print("Пат!")
-            #     break
 
     def handle_input_error(self, message):
         print('\n' * 3 + '\t' * 4 + message)
