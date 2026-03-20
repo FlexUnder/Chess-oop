@@ -5,12 +5,10 @@ def send_data(connection, data):
         print('Соединение разорвано. Нажмите Enter')
         connection.close()
         input()
-        main.main_menu()
     except ConnectionAbortedError:
         print('Соединение разорвано. Нажмите Enter')
         connection.close()
         input()
-        main.main_menu()
 
 
 def listen_data(connection):
@@ -21,9 +19,7 @@ def listen_data(connection):
         print('Ваш противник вышел!. Нажмите Enter')
         connection.close()
         input()
-        main.main_menu()
     except ConnectionAbortedError:
         print('Ваш противник вышел!. Нажмите Enter')
         connection.close()
         input()
-        main.main_menu()

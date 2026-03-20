@@ -1,4 +1,6 @@
 import importlib
+
+
 pieces = importlib.import_module('variants.checkers.pieces')
 
 
@@ -33,7 +35,6 @@ class Board:
         if self._rules is not None:
             chain = self._rules._capture_map.get((fx, fy, tx, ty))
             if chain:
-                # Применяем каждый шаг цепочки
                 cx, cy = fx, fy
                 for cap_x, cap_y, land_x, land_y in chain:
                     self.apply_move_simple(cx, cy, land_x, land_y, cap_x, cap_y)
@@ -41,7 +42,6 @@ class Board:
                     cx, cy = land_x, land_y
                 return Move(fx, fy, tx, ty)
 
-        # Обычный ход (без взятия)
         self.field[ty][tx] = self.field[fy][fx]
         self.field[fy][fx] = None
         self.promote_if_needed(tx, ty)

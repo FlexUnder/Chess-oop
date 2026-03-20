@@ -16,7 +16,7 @@ def accept_connections(_socket):
     connection, address = _socket.accept()
     ip, _ = address
     try:
-        print('Подсоединен:', socket.gethostbyaddr(ip)[0].split('.')[0]) # socket.getfqdn(ip).split('.')[0] вызывает ошибку
+        print('Подсоединен:', socket.gethostbyaddr(ip)[0].split('.')[0])
     except socket.herror:
         print('Подсоединен:', ip)
     return connection

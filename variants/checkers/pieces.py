@@ -12,7 +12,6 @@ class Piece:
 
 
 class Man(Piece):
-    """Обычная шашка"""
     def __init__(self, color):
         super().__init__(color)
         self.symbol = '●'
@@ -21,7 +20,6 @@ class Man(Piece):
 
 
 class King(Piece):
-    """Дамка — ходит по диагонали на любое расстояние"""
     def __init__(self, color):
         super().__init__(color)
         self.symbol = '♔'
