@@ -3,7 +3,7 @@ from base import WHITE, WHITE_SQUARE, BLACK_SQUARE, BLACK_PIECE_COLOR, WHITE_PIE
 
 class Render:
 
-    def print_board(self, board):
+    def render_board(self, board, highlights=None, threats=None):
         reset_all_colors = '\x1b[0m'
         indent = '\t' * 4 + '   '
 

@@ -15,7 +15,8 @@ class Board:
         self.field = [[None for _ in range(rows)] for _ in range(cols)]
         self.width = rows
         self.length = cols
-        self._rules = None  # устанавливается через setup.link_rules()
+        self._rules = None
+        self.history = []
 
     def get_piece(self, x, y):
         return self.field[y][x]
@@ -28,10 +29,7 @@ class Board:
                             " Для передвижения фигур используй apply_move(), а не set()")
 
     def apply_move(self, fx, fy, tx, ty) -> Move:
-        """
-        Применяет ход. Если в rules._capture_map есть цепочка взятий для этого хода —
-        применяет все шаги цепочки последовательно. Иначе — обычный ход.
-        """
+
         if self._rules is not None:
             chain = self._rules._capture_map.get((fx, fy, tx, ty))
             if chain:
@@ -50,7 +48,6 @@ class Board:
         return Move(fx, fy, tx, ty)
 
     def apply_move_simple(self, fx, fy, tx, ty, cap_x=None, cap_y=None):
-        """Внутренний метод: перемещает шашку и убирает съеденную."""
         self.field[ty][tx] = self.field[fy][fx]
         self.field[fy][fx] = None
         if cap_x is not None and cap_y is not None:

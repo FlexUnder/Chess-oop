@@ -6,18 +6,9 @@ pieces = importlib.import_module('variants.checkers.pieces')
 
 
 class Rules:
-    """
-    get_legal_moves возвращает [(tx, ty), ...] — конечные точки всей цепочки взятий.
-    _capture_map хранит полный маршрут: (fx,fy,tx,ty) -> [(cap_x,cap_y,land_x,land_y), ...]
-    board.apply_move(fx,fy,tx,ty) применяет весь маршрут за один вызов.
-    """
 
     def __init__(self):
         self._capture_map: dict = {}
-
-    # ------------------------------------------------------------------ #
-    #  Интерфейс                                                 #
-    # ------------------------------------------------------------------ #
 
     def get_legal_moves(self, board, x, y, player_color):
         piece = board.get_piece(x, y)
@@ -28,8 +19,7 @@ class Rules:
 
         if self._player_has_capture(board, player_color):
             chains = self._build_capture_chains(board, x, y, player_color)
-            # Если несколько цепочек ведут в одну точку — берём самую длинную
-            best: dict = {}  # (tx, ty) -> лучшая цепочка
+            best: dict = {}
             for chain in chains:
                 tx, ty = chain[-1][2], chain[-1][3]
                 if (tx, ty) not in best or len(chain) > len(best[(tx, ty)]):
@@ -60,10 +50,6 @@ class Rules:
     def is_stalemate(self, board, color):
         return False
 
-    # ------------------------------------------------------------------ #
-    #  Конец игры                                                         #
-    # ------------------------------------------------------------------ #
-
     def _is_loss(self, board, color):
         for y in range(8):
             for x in range(8):
@@ -73,15 +59,8 @@ class Rules:
                         return False
         return True
 
-    # ------------------------------------------------------------------ #
-    #  Построение цепочек взятий                                          #
-    # ------------------------------------------------------------------ #
-
     def _build_capture_chains(self, board, x, y, player_color):
-        """
-        Возвращает список цепочек. Каждая цепочка — список шагов:
-        [(cap_x, cap_y, land_x, land_y), ...]
-        """
+
         piece = board.get_piece(x, y)
         if isinstance(piece, pieces.King):
             single_captures = self._king_captures(board, x, y, player_color, set())
@@ -94,7 +73,6 @@ class Rules:
         result = []
         for lx, ly, ex, ey in single_captures:
             step = (ex, ey, lx, ly)
-            # Применяем ход на копии доски и рекурсивно ищем продолжения
             board_copy = copy.deepcopy(board)
             board_copy.apply_move_simple(x, y, lx, ly, ex, ey)
             board_copy.promote_if_needed(lx, ly)
@@ -107,10 +85,6 @@ class Rules:
                 result.append([step])
 
         return result
-
-    # ------------------------------------------------------------------ #
-    #  Тихие ходы                                                         #
-    # ------------------------------------------------------------------ #
 
     def _get_quiet_moves(self, board, x, y, player_color):
         piece = board.get_piece(x, y)
@@ -140,10 +114,6 @@ class Rules:
                 else:
                     break
         return moves
-
-    # ------------------------------------------------------------------ #
-    #  Бьющие ходы (одиночные)                                            #
-    # ------------------------------------------------------------------ #
 
     def _player_has_capture(self, board, player_color):
         for y in range(8):
