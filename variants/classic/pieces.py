@@ -6,6 +6,7 @@ class Piece:
         self.symbol = 'E'
         self.color = color
         self.sliding = True
+        self.has_moved = False
 
     def __repr__(self):
         return self.symbol

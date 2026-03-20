@@ -8,11 +8,14 @@ class Move:
         self.to_x = to_x
         self.to_y = to_y
 
+
 class Board:
     def __init__(self, rows=8, cols=8):
         self.field = [[None for _ in range(rows)] for _ in range(cols)]
         self.width = rows
         self.length = cols
+        self.last_move = None
+        self.history = []
 
     def get_piece(self, x, y):
         return self.field[y][x]
@@ -24,9 +27,34 @@ class Board:
             raise Exception("Клетка уже занята. Непутевый ты программист!"
                             " Для передвижения фигур используй apply_move(), а не set()")
 
-    def apply_move(self, fx, fy, tx, ty) -> Move:
+    def apply_move(self, fx, fy, tx, ty):
         move = Move(fx, fy, tx, ty)
-        self.field[fy][fx], self.field[ty][tx] = None, self.field[fy][fx]
+        piece = self.field[fy][fx]
+
+        if isinstance(piece, pieces.Pawn):
+            if fx != tx and self.is_empty(tx, ty):
+                self.field[fy][tx] = None
+
+        if isinstance(piece, pieces.King) and abs(tx - fx) == 2:
+            if tx == 6:
+                rook = self.field[fy][7]
+                self.field[fy][5] = rook
+                self.field[fy][7] = None
+                rook.has_moved = True
+            elif tx == 2:
+                rook = self.field[fy][0]
+                self.field[fy][3] = rook
+                self.field[fy][0] = None
+                rook.has_moved = True
+
+        self.field[fy][fx] = None
+        self.field[ty][tx] = piece
+
+        if piece:
+            piece.has_moved = True
+
+        self.last_move = move
+
         return move
 
     def is_position_in_bounds(self, x, y) -> bool:

@@ -23,6 +23,9 @@ class Mode(base.GameMode):
             self.connection = client.connect_to_server(self.connection_ip)
 
     def run(self):
+        highlights_cells = []
+        threatened_cells = []
+
         if self.network_type == SERVER:
             self.output_ips()
             self.connection = server.accept_connections(self.socket)
@@ -35,24 +38,49 @@ class Mode(base.GameMode):
         while True:
             console.clear_console()
             console.print_logo()
-            self.render.print_board(self.board)
+            self.render.render_board(self.board, highlights=highlights_cells, threats=threatened_cells)
 
             if self.turn == self.local_player_color:
                 raw_input = console.get_player_input(self.turn)
+                highlights_cells = []
+                threatened_cells = []
                 normalized = self.normalize_input(raw_input)
                 if not normalized:
                     self.handle_input_error('Неверный формат! Формат хода: пара [a-h][1-8].\nПримеры: e2 e4, e2e4, а2 а4')
                     continue
-                x_from, y_from, x_to, y_to = self.parse_input(normalized)
-                legal_moves = self.rules.get_legal_moves(self.board, x_from, y_from, self.turn)
-                if (x_to, y_to) not in legal_moves:
-                    self.handle_input_error('Фигура не может сделать ход на эту клетку!')
+                parsed = self.parse_input(normalized)
+                if parsed == 'danger':
+                    threatened_cells, is_check = self.rules.get_threatened_pieces(self.board, self.turn)
+                    if is_check:
+                        console.print_center('ШАХ')
+                    continue
+                if len(parsed) == 2:
+                    x, y = parsed
+
+                    piece = self.board.get_piece(x, y)
+                    if not piece or piece.color != self.turn:
+                        console.print_center('Неверная фигура')
+                        continue
+
+                    highlights_cells = self.rules.get_legal_moves(self.board, x, y, self.turn)
                     continue
 
-                self.board.apply_move(x_from, y_from, x_to, y_to)
+                elif len(parsed) == 4:
+                    x_from, y_from, x_to, y_to = parsed
 
-                print(f'{x_from} {y_from} {x_to} {y_to}')
-                protocol.send_data(self.connection, f'{x_from} {y_from} {x_to} {y_to}')
+                    piece = self.board.get_piece(x_from, y_from)
+                    if not piece or piece.color != self.turn:
+                        self.handle_input_error('Неверная фигура')
+                        continue
+
+                    legal_moves = self.rules.get_legal_moves(self.board, x_from, y_from, self.turn)
+                    if (x_to, y_to) not in legal_moves:
+                        self.handle_input_error('Фигура не может сделать ход на эту клетку!')
+                        continue
+
+                    self.board.apply_move(x_from, y_from, x_to, y_to)
+
+                    protocol.send_data(self.connection, f'{x_from} {y_from} {x_to} {y_to}')
             else:
                 console.print_center('Ход оппонента')
                 opponent_move = map(int, protocol.listen_data(self.connection).split())
@@ -66,10 +94,6 @@ class Mode(base.GameMode):
             if finish_message:
                 print(finish_message)
                 break
-
-                # if self.rules.is_stalemate(self.board, self.current_player):
-                #     print("Пат!")
-                #     break
 
     def handle_input_error(self, message):
         print('\n' * 3 + '\t' * 4 + message)

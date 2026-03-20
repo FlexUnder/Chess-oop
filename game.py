@@ -8,7 +8,6 @@ class Game:
         rules = variant.rules.Rules()
         render = variant.render.Render()
 
-        # Хук для вариантов которым нужна связь между объектами (например шашки)
         if hasattr(variant, 'after_init'):
             variant.after_init(board, rules)
 

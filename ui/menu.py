@@ -47,21 +47,14 @@ def selection_loop(choose_function, converter, is_valid):
     while True:
         console.clear_console()
         console.print_logo()
-        game_option = choose_function()
-        if is_valid(game_option):
-            if game_option in converter.keys():
-                return converter[game_option]
-            else:
-                return game_option
-        else:
+        value = choose_function()
+
+        if not is_valid(value):
             print('Некорректный ввод. Введите Enter')
             input()
             continue
-        # else:
-        #     if game_option in converter.keys():
-        #         return converter[game_option]
-        #     else:
-        #         return game_option
+
+        return converter.get(value, value)
 
 
 def is_ip_valid(input_ip):
@@ -70,23 +63,47 @@ def is_ip_valid(input_ip):
 
 
 def start():
-    network_type = ''
-    network_config = None, None
     while True:
-        console.clear_console()
-        console.print_logo()
-        variant = selection_loop(get_variant, base.numbers_to_str_variants, lambda x: x in list(map(str, range(1, 5))))
-        console.clear_console()
-        console.print_logo()
-        mode = selection_loop(get_mode, base.numbers_to_str_modes, lambda x: x in list(map(str, range(1, 4))))
-        if mode == 'online':
-            network_type = selection_loop(get_network_type, base.network_menu, lambda x: x in list(map(str, range(1, 4))))
-            if network_type == 'client':
-                network_config = network_type, selection_loop(get_connection_ip, base.connection_menu, is_ip_valid)
-            if network_type == 'server':
-                network_config = network_type, None
+        variant = selection_loop(
+            get_variant,
+            base.numbers_to_str_variants,
+            lambda x: x in list(map(str, range(1, 5)))
+        )
 
-        if mode != 'back' and network_type != 'back' and network_config[1] != 'back':
-            break
-    print(variant, mode, network_config)
-    return variant, mode, network_config
+        while True:
+            mode = selection_loop(
+                get_mode,
+                base.numbers_to_str_modes,
+                lambda x: x in list(map(str, range(1, 4)))
+            )
+
+            if mode == 'back':
+                break
+
+            if mode != 'online':
+                return variant, mode, (None, None)
+
+            while True:
+                network_type = selection_loop(
+                    get_network_type,
+                    base.network_menu,
+                    lambda x: x in list(map(str, range(1, 4)))
+                )
+
+                if network_type == 'back':
+                    break
+
+                if network_type == 'server':
+                    return variant, mode, (network_type, None)
+
+                if network_type == 'client':
+                    ip = selection_loop(
+                        get_connection_ip,
+                        base.connection_menu,
+                        is_ip_valid
+                    )
+
+                    if ip == 'back' or ip == 'q':
+                        continue
+
+                    return variant, mode, (network_type, ip)

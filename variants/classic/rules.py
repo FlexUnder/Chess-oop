@@ -19,11 +19,16 @@ class Rules:
         return legal_moves
 
 
-    def get_piece_moves(self, board: Board, x, y, player_color):
+    def get_piece_moves(self, board: Board, x, y, player_color, for_attack=False):
         piece = board.get_piece(x, y)
 
         if isinstance(piece, pieces.Pawn):
             return self.generate_pawn_moves(board, x, y)
+        elif isinstance(piece, pieces.King):
+            moves = self.generate_moves(board, x, y, player_color)
+            if not for_attack:
+                moves += self.generate_castling_moves(board, x, y, player_color)
+            return moves
         else:
             return self.generate_moves(board, x, y, player_color)
 
@@ -66,7 +71,6 @@ class Rules:
         if target_square and target_square.color == player_color:
             return False
         return True
-        # return not self.is_in_check(supposed_board, player_color)
 
 
     def generate_pawn_moves(self, board: Board, x, y):
@@ -88,11 +92,59 @@ class Rules:
             if board.is_enemy(x_new, y_new, piece.color):
                 moves.append((x_new, y_new))
 
-        # 4. En passant
-        # if self.can_en_passant(...):
-        #     moves.append(...)
+        last_move = board.last_move
+
+        if last_move:
+            moved_piece = board.get_piece(last_move.to_x, last_move.to_y)
+
+            if isinstance(moved_piece, pieces.Pawn):
+                if abs(last_move.from_y - last_move.to_y) == 2:
+                    if last_move.to_y == y and abs(last_move.to_x - x) == 1:
+                        moves.append((last_move.to_x, y + direction))
 
         return moves
+
+    def generate_castling_moves(self, board, x, y, color):
+        piece = board.get_piece(x, y)
+
+        if piece.has_moved:
+            return []
+
+        if self.is_in_check(board, color):
+            return []
+
+        moves = []
+
+        # короткая рокировка
+        rook = board.get_piece(7, y)
+        if isinstance(rook, pieces.Rook) and not rook.has_moved:
+            if board.is_empty(5, y) and board.is_empty(6, y):
+                if not self.is_square_attacked(board, 5, y, color) and \
+                        not self.is_square_attacked(board, 6, y, color):
+                    moves.append((6, y))
+
+        # длинная рокировка
+        rook = board.get_piece(0, y)
+        if isinstance(rook, pieces.Rook) and not rook.has_moved:
+            if board.is_empty(1, y) and board.is_empty(2, y) and board.is_empty(3, y):
+                if not self.is_square_attacked(board, 2, y, color) and \
+                        not self.is_square_attacked(board, 3, y, color):
+                    moves.append((2, y))
+
+        return moves
+
+
+    def is_square_attacked(self, board, x, y, color):
+        opponent = base.BLACK if color == base.WHITE else base.WHITE
+
+        for yy in range(8):
+            for xx in range(8):
+                piece = board.get_piece(xx, yy)
+                if piece and piece.color == opponent:
+                    moves = self.get_piece_moves(board, xx, yy, opponent)
+                    if (x, y) in moves:
+                        return True
+        return False
 
 
     def is_pawn_starting_rank(self, y):
@@ -118,7 +170,7 @@ class Rules:
             for x in range(8):
                 piece = board.get_piece(x, y)
                 if piece and piece.color == opponent_color:
-                    if king_position in self.get_piece_moves(board, x, y, opponent_color):
+                    if king_position in self.get_piece_moves(board, x, y, opponent_color, for_attack=True):
                         return True
         return False
 
@@ -153,3 +205,34 @@ class Rules:
                         if not self.is_in_check(supposed_board, color):
                             return False
         return True
+
+    def get_threatened_pieces(self, board, player_color):
+        opponent_color = base.WHITE if player_color == base.BLACK else base.BLACK
+
+        attacked_squares = set()
+
+        for y in range(board.width):
+            for x in range(board.length):
+                piece = board.get_piece(x, y)
+
+                if piece and piece.color == opponent_color:
+                    moves = self.get_piece_moves(board, x, y, opponent_color, for_attack=True)
+
+                    for move in moves:
+                        attacked_squares.add(move)
+
+        threatened = []
+        king_in_check = False
+
+        for y in range(board.width):
+            for x in range(board.length):
+                piece = board.get_piece(x, y)
+
+                if piece and piece.color == player_color:
+                    if (x, y) in attacked_squares:
+                        threatened.append((x, y))
+
+                        if piece.__class__.__name__ == "King":
+                            king_in_check = True
+
+        return threatened, king_in_check
