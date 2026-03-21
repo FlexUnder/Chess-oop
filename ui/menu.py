@@ -10,7 +10,8 @@ def get_variant():
     console.print_center('1.♟️ Классические шахматы')
     console.print_center('2.👌 Шахматы на троих')
     console.print_center('3.🛠️ Шахматы с модификациями')
-    console.print_center('4.🧨 Шашки\n')
+    console.print_center('4.🧨 Шашки')
+    console.print_center('5.💠 Гексагональные шахматы\n')
     variant = input('\t' * 4 + '  > ')
     return variant
 
@@ -67,7 +68,7 @@ def start():
         variant = selection_loop(
             get_variant,
             base.numbers_to_str_variants,
-            lambda x: x in list(map(str, range(1, 5)))
+            lambda x: x in list(map(str, range(1, 6)))
         )
 
         while True:
