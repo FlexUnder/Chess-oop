@@ -6,8 +6,8 @@ from modes import base
 
 
 class Mode(base.GameMode):
-    def __init__(self, board, rules, render, network_config):
-        super().__init__(board, rules, render)
+    def __init__(self, board, rules, render, config, network_config):
+        super().__init__(board, rules, render, config)
 
     def run(self):
         highlights_cells = []

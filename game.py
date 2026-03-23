@@ -8,21 +8,19 @@ class Game:
         board = variant.setup.create_board()
         rules = variant.rules.Rules()
         render = variant.render.Render()
+        config = variant.config.Config()
 
         if hasattr(variant, 'after_init'):
             variant.after_init(board, rules)
 
-        self.mode = self.create_mode(variant_name, mode_name, board, rules, render, network_config)
+        self.mode = self.create_mode(mode_name, board, rules, render, config, network_config)
 
     def load_variant(self, variant_name):
         return importlib.import_module(f"variants.{variant_name}")
 
-    def create_mode(self, variant_name, mode_name, board, rules, render, network_config):
-        try:
-            module = importlib.import_module(f"variants.{variant_name}.modes.{mode_name}")
-        except ModuleNotFoundError:
-            module = importlib.import_module(f"modes.{mode_name}")
-        return module.Mode(board, rules, render, network_config)
+    def create_mode(self, mode_name, board, rules, render, config, network_config):
+        module = importlib.import_module(f"modes.{mode_name}")
+        return module.Mode(board, rules, render, config, network_config)
 
     def run(self):
         self.mode.run()
