@@ -8,7 +8,7 @@ class Game:
         board = variant.setup.create_board()
         rules = variant.rules.Rules()
         render = variant.render.Render()
-        config = variant.config.Config()
+        config = variant.config
 
         if hasattr(variant, 'after_init'):
             variant.after_init(board, rules)
