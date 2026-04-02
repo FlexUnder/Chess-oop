@@ -25,6 +25,9 @@ class Mode(base.GameMode):
                 self.handle_input_error('Неверный формат! Формат хода: пара [a-h][1-8].\nПримеры: e2 e4, e2e4, а2 а4')
                 continue
             parsed  = self.parse_input(normalized)
+            if parsed is None:
+                self.handle_input_error('Неверные координаты!')
+                continue
             if parsed == 'danger':
                 threatened_cells, is_check = self.rules.get_threatened_pieces(self.board, self.turn)
                 if is_check:
