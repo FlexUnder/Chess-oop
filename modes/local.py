@@ -1,6 +1,6 @@
 import copy
 
-from base import WHITE, BLACK
+from base import WHITE, BLACK, RED
 from ui import console
 from modes import base
 
@@ -82,6 +82,8 @@ class Mode(base.GameMode):
         input('\n' + '\t' * 4 + 'Нажмите Enter чтобы продолжить...')
 
     def switch_player(self):
-        self.turn = BLACK if self.turn == WHITE else WHITE
+        players = [WHITE, BLACK, RED]
+        idx = players.index(self.turn)
+        self.turn = players[(idx + 1) % len(players)]
 
 

@@ -1,7 +1,7 @@
 import random
 
 from network import server, client, protocol
-from base import WHITE, BLACK
+from base import WHITE, BLACK, RED
 from base import SERVER, CLIENT
 from ui import console
 from modes import base
@@ -110,6 +110,8 @@ class Mode(base.GameMode):
             console.print_center(f'Radmin: {self.radmin_ip}', 1)
 
     def switch_turn(self):
-        self.turn = BLACK if self.turn == WHITE else WHITE
+        players = [WHITE, BLACK, RED]
+        idx = players.index(self.turn)
+        self.turn = players[(idx + 1) % len(players)]
 
 
