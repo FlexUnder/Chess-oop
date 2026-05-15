@@ -18,7 +18,7 @@ class GameMode:
         max_letter = self.params['input_max_letter']
         russian_to_latin = {
             'ф': 'a', 'и': 'b', 'с': 'c', 'в': 'd', 'у': 'e', 'а': 'f',
-            'п': 'g', 'р': 'h', 'ш': 'i', 'о': 'j', 'л': 'k'
+            'п': 'g', 'р': 'h', 'ш': 'i', 'о': 'j', 'л': 'k', 'ж': 'l',
         }
 
         normalized = raw_input.lower().translate(str.maketrans(russian_to_latin)).strip()
@@ -26,9 +26,8 @@ class GameMode:
         if normalized in ('danger', 'undo'):
             return normalized
 
-        letters = 'abcdefghijk'
+        letters = 'abcdefghijkl'
         max_l = letters[max_letter - 1]
-        # Паттерн для одной клетки: буква + число (1 или 2 цифры)
         cell = rf'[a-{max_l}]\d{{1,2}}'
 
         match_two = re.match(rf'^({cell})\s*({cell})$', normalized)
@@ -45,18 +44,20 @@ class GameMode:
         if normalized_input in ('danger', 'undo'):
             return normalized_input
 
-        # Кастомный парсер из конфига варианта
         if 'parse_input' in self.params:
             return self.params['parse_input'](normalized_input)
 
-        # Стандартный шахматный парсер
         letters_to_coordinates = {
             'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4,
-            'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9, 'k': 10
+            'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9,
+            'k': 10, 'l': 11,
         }
 
+        # board_size берём из конфига варианта — у классики 8, у trio 12
+        board_size = self.params.get('board_size', 8)
+
         def to_coords(pos):
-            return letters_to_coordinates[pos[0]], 8 - int(pos[1:])
+            return letters_to_coordinates[pos[0]], board_size - int(pos[1:])
 
         if len(normalized_input) == 1:
             return (*to_coords(normalized_input[0]),)

@@ -1,3 +1,5 @@
+# variants/trio/render.py
+
 from base import (
     WHITE,
     BLACK,
@@ -15,16 +17,10 @@ class Render:
 
     def render_board(self, board, highlights=None, threats=None):
 
-        if highlights is None:
-            highlights = []
-
-        if threats is None:
-            threats = []
-
         print()
 
         # буквы сверху
-        print('   ', end='')
+        print('    ', end='')
 
         for x in range(board.SIZE):
             print(f' {chr(97 + x)} ', end='')
@@ -33,18 +29,16 @@ class Render:
 
         for y in range(board.SIZE):
 
-            # номер строки
-            print(f'{board.SIZE - y:2} ', end='')
+            # шахматная нумерация
+            print(f'{board.SIZE - y:2}  ', end='')
 
             for x in range(board.SIZE):
 
-                if not board.is_position_in_bounds(x, y):
-                    print('   ', end='')
-                    continue
-
-                is_light = (x + y) % 2 == 0
-
-                background = WHITE_SQUARE if is_light else BLACK_SQUARE
+                background = (
+                    WHITE_SQUARE
+                    if (x + y) % 2 == 0
+                    else BLACK_SQUARE
+                )
 
                 piece = board.get_piece(x, y)
 
@@ -60,7 +54,6 @@ class Render:
                     piece_color = BLACK_PIECE_COLOR
 
                 else:
-                    # RED
                     piece_color = '\033[38;5;196m'
 
                 print(
@@ -68,12 +61,12 @@ class Render:
                     end=''
                 )
 
-            print(f' {board.SIZE - y}')
+            print(f'  {board.SIZE - y}')
 
         print()
 
         # буквы снизу
-        print('   ', end='')
+        print('    ', end='')
 
         for x in range(board.SIZE):
             print(f' {chr(97 + x)} ', end='')
