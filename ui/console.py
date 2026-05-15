@@ -1,7 +1,7 @@
 import os
 import platform
 
-from base import WHITE
+from base import WHITE, BLACK, RED
 
 
 def clear_console():
@@ -20,8 +20,13 @@ def print_logo():
 def get_player_input(color):
     if color == WHITE:
         player_input = input('\t' * 4 + ' Ход белых > ')
-    else:
+    elif color == BLACK:
         player_input = input('\t' * 4 + ' Ход черных > ')
+    elif color == RED:
+        player_input = input('\t' * 4 + ' Ход красных > ')
+    else:
+        player_input = input('\t' * 4 + ' Ход следующего игрока > ')
+
     return player_input
 
 

@@ -34,20 +34,20 @@ class Rules:
             return []
 
         if isinstance(piece, Pawn):
-            return self._pawn_moves(board, x, y, piece)
+            return self._pawn_moves(board, x, y, piece, for_attack)
         elif isinstance(piece, King):
-            moves = self._sliding_or_step(board, x, y, player_color)
+            moves = self._sliding_or_step(board, x, y, player_color, for_attack)
             if not for_attack:
                 moves += self._castling_moves(board, x, y, player_color)
             return moves
         else:
-            return self._sliding_or_step(board, x, y, player_color)
+            return self._sliding_or_step(board, x, y, player_color, for_attack)
 
     # ------------------------------------------------------------------ #
     #  Генерация ходов                                                     #
     # ------------------------------------------------------------------ #
 
-    def _sliding_or_step(self, board, x, y, player_color):
+    def _sliding_or_step(self, board, x, y, player_color, for_attack=False):
         piece = board.get_piece(x, y)
         moves = []
         max_steps = SIZE if piece.sliding else 1
@@ -60,13 +60,19 @@ class Rules:
                 target = board.get_piece(nx, ny)
                 if target:
                     if target.color != player_color:
-                        moves.append((nx, ny))
+
+                        if target.__class__.__name__ == 'King':
+                            if for_attack:
+                                moves.append((nx, ny))
+                        else:
+                            moves.append((nx, ny))
+
                     break
                 moves.append((nx, ny))
 
         return moves
 
-    def _pawn_moves(self, board, x, y, piece):
+    def _pawn_moves(self, board, x, y, piece, for_attack=False):
         moves = []
         dx, dy = piece.direction
 
@@ -90,7 +96,12 @@ class Rules:
             if board.is_position_in_bounds(cx, cy):
                 target = board.get_piece(cx, cy)
                 if target and target.color != piece.color:
-                    moves.append((cx, cy))
+
+                    if target.__class__.__name__ == 'King':
+                        if for_attack:
+                            moves.append((cx, cy))
+                    else:
+                        moves.append((cx, cy))
 
         return moves
 
